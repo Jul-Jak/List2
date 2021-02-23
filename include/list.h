@@ -3,191 +3,147 @@
 
 using namespace std;
 
-template <class T>
-struct Item 
-{
-	T Data; 
-	Item* next; 
-
-	Item(T x = 0, Item* n = NULL)
-	{
-		Data = x;
-		next = n;
-	}
-};
-
-
-template <class T>
-class TList
-{
-	Item<T>* first;  //голова
+template<class T>
+class List {
 public:
-	TList();
-	~TList();
-
-	bool IsEmpty(); 
-	Item<T>* Search(T x);
-	void InsertHead(Item<T>*);
-	void InsertEnd(Item<T>*);
-	void InsertPointer(Item<T>*, Item <T>* p);
-
-	T FindFromEnd(int position_from_end);
-
-	void DeleteHead();
-	T DeleteEnd();
-	T DeletePointer(Item <T>* p);
-	void PrintL();
-};
-
-template <class T>
-TList<T>::TList()
-{
-	first = NULL;
-}
-
-template <class T>
-TList<T>::~TList()
-{
-	if (first != NULL)
-	{
-		Item<T>* temp = first;
-		for (Item<T>* cur = first->next; cur != NULL; cur = cur->next)
-		{
-			delete temp;
-			temp = cur;
+	class Node {
+	public:
+		T data;
+		Node* next;
+		Node(T value = 0, Node* next_ = NULL){
+			next = next_;
+			data = value;
 		}
-		delete temp;
+	};
+	Node* first;
+	size_t size;
+public:
+	class iterator {
+	private:
+		Node* ptr;
+	public:
+		iterator() : ptr(NULL) {}
+		iterator(Node* ptr_) : ptr(ptr_) {}
+		iterator(const iterator& iter) : ptr(iter.ptr) {}
+		iterator& operator++ () {
+			ptr = ptr->next;
+			return *this;
+		}
+		iterator operator++ (int) {
+			iterator iter(*this);
+			++(*this);
+			return iter;
+		}
+
+		Node*& operator*() {
+			return ptr;
+		}
+		Node* operator->() {
+			return ptr;
+		}
+		bool operator== (iterator iter) const {
+			return ptr == iter.ptr;
+		}
+		bool operator!= (iterator iter) const {
+			return !(*this == iter);
+		}
+	};
+
+	List() {
 		first = NULL;
+		size = 0;
 	}
-}
 
-template <class ValType>
-bool TList<ValType>::IsEmpty()
-{
-	if (first != NULL) return false;
-	else return true;
-}
-
-template <class T>
-Item<T>* TList<T>::Search(T x)
-{
-	if (first)
-	{
-		Item<T>* temp = first;
-		while ((temp != NULL) && (temp->Data != x)) temp = temp->next;
-		return temp;
-	}
-	else return 0;
-}
-
-template <class T>
-void TList<T>::InsertHead(Item<T>* x)
-{
-	if (x != NULL)
-	{
-		x->next = first;
-		first = x;
-	}
-	else throw 0;
-}
-
-template <class T>
-void TList<T>::InsertEnd(Item<T>* x)
-{
-	if (x)
-	{
-		if (first)
-		{
-			Item<T>* point = first;
-			while (point->next != 0) point = point->next;
-			point->next = x;
+	List(const List<T>& lst) {
+		first = NULL;
+		Node* pcurr = first;
+		size = lst.size;
+		for (iterator it_curr = lst.begin(); it_curr != lst.end(); ++it_curr) {
+			Insert(pcurr, it_curr->data);
+			pcurr = pcurr->next;
 		}
-		else first = x;
-		x->next = 0;
 	}
-	else throw 0;
-}
 
-template <class T>
-void TList<T>::InsertPointer(Item<T>* x, Item<T>* n)
-{
-	if ((n) && (x))
-	{
-		n->next = x->next;
-		x->next = n;
+	~List() {
+		while (first)
+			DeleteFirst();
 	}
-	else throw 0;
-}
 
-template <class T>
-void TList<T>::DeleteHead()
-{
-	if (first == NULL) throw "Error!";
-	Item<T>* temp = first;
-	first = first->next;
-	delete temp;
-}
-
-template <class T>
-T TList <T> ::DeleteEnd()
-{
-	if (first != NULL)
-	{
-		if (first->next != NULL)
-		{
-			Item<T>* temp = first;
-			while (temp->next->next) temp = temp->next;
-			delete temp->next;
-			temp->next = 0;
+	void Print() {
+		iterator iter = begin();
+		while (iter != end()) {
+			std::cout << iter->data << " ";
+			iter++;
 		}
-		else
-			return first->Data;
+		std::cout << std::endl;
 	}
-}
 
-template <class T>
-T TList <T> ::DeletePointer(Item <T>* p)
-{
-	if (p)
+	Node* get_first() {
+		return first;
+	}
+
+	iterator Search(T& value) {
+		iterator it = begin();
+		while (it != end()) {
+			if (it->data == value)
+				break;
+			it++;
+		}
+		return it;
+	}
+
+	void Delete(Node* pos) {
+		if (pos == NULL) {
+			DeleteFirst();
+		}
+		else {
+			Node* p = pos->next;
+			pos->next = p->next;
+			delete p;
+		}
+	}
+
+	iterator begin() const {
+		iterator it(first);
+		return it;
+	}
+
+	iterator end() const {
+		iterator it(NULL);
+		return it;
+	}
+
+	bool empty() {
+		return size == 0;
+	}
+
+	size_t get_size() {
+		return size;
+	}
+
+	void Insert_at_First(const T& value) {
+		Node* tmp = new Node(value, first);
+		first = tmp;
+		size++;
+	}
+
+	void DeleteFirst() {
+		if (!size) { throw "empty list"; }
+		Node* tmp = first;
+		first = tmp->next;
+		delete tmp;
+		size--;
+	}
+
+	void Insert(Node* pos, const T& value)
 	{
-		Item<T>* temp = p->next;
-		p->next = p->next->next;
-		return temp->Data;
+		if (pos == NULL) {
+			Insert_at_First(value);
+		}
+		else {
+			Node* tmp = new Node(value, pos->next);
+			pos->next = tmp;
+			size++;
+		}
 	}
-	else
-		throw 1;
-}
-
-template <class T>
-void TList <T> ::PrintL() 
-{
-	Item <T>* temp = first;
-	while (temp)
-	{
-		cout << temp->Data << endl;
-		temp = temp->next;
-	}
-}
-
-template <class T>
-T TList<T>::FindFromEnd(int position_from_end)
-{
-	// ЗАДАНИЕ
-	// Вывести k-й с конца элемент списка за один проход
-
-	Item<T>* head1 = this->first;
-	Item<T>* head2 = this->first;
-
-	for (int i = 0; i < position_from_end - 1; i++) {
-		if (head2 == NULL) return NULL;
-		head2 = head2->next;
-	}
-
-	while (head2->next != NULL) {
-		head1 = head1->next;
-		head2 = head2->next;
-	}
-	std::cout << head1->Data << std::endl;
-	return head1->Data;
-	
-}
+};
